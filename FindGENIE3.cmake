@@ -12,7 +12,39 @@ if(NOT TARGET GENIE3::All)
     return()
   endif()
 
-  find_package(ROOT 6 REQUIRED COMPONENTS EGPythia6 MathMore Geom)
+  find_package(ROOT 6 REQUIRED COMPONENTS MathMore Geom)
+
+  #search for standalone EGPythia6
+  find_package(ROOTEGPythia6 QUIET)
+
+  if(NOT TARGET ROOT::EGPythia6)
+
+    find_library(EGPythia6_LIB
+      NAMES libEGPythia6.so
+      PATHS $ENV{ROOTSYS}/lib $ENV{ROOTSYS}/lib/root
+            $ENV{ROOTSYS}/lib64 $ENV{ROOTSYS}/lib64/root)
+
+    find_path(TPythia6_INC
+      NAMES TPythia6.h
+      PATHS $ENV{ROOTSYS}/include $ENV{ROOTSYS}/include/root)
+
+    if("${EGPythia6_LIB}" STREQUAL "EGPythia6_LIB-NOT_FOUND")
+      cmessage(FATAL_ERROR "Cannot find libEGPythia6.so, required for GENIE.")
+    endif()
+
+    if("${TPythia6_INC}" STREQUAL "TPythia6_INC-NOT_FOUND")
+      cmessage(FATAL_ERROR "Cannot find TPythia6.h, required for GENIE.")
+    endif()
+
+    add_library(ROOT::EGPythia6 SHARED IMPORTED)
+    set_target_properties(ROOT::EGPythia6 PROPERTIES
+      PUBLIC_INCLUDE_DIRECTORIES "${TPythia6_INC}"
+      IMPORTED_LOCATION ${EGPythia6_LIB}
+    )
+
+    add_library(Pythia6::Pythia6 INTERFACE IMPORTED) #this dummy library should
+                                                     #stop everyone else worrying
+  endif()
 
   EnsureVarOrEnvSet(GENIE_REWEIGHT GENIE_REWEIGHT)
   # Needed for FNAL gpvms
