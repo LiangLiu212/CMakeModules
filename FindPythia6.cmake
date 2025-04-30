@@ -1,5 +1,6 @@
 include(CMessage)
 
+set(Pythia6_FOUND TRUE)
 if(NOT TARGET Pythia6::Pythia6)
 
   EnsureVarOrEnvSet(PYTHIA6 PYTHIA6)
