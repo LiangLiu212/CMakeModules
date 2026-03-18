@@ -52,13 +52,9 @@ if(NOT TARGET GENIE3::All)
     )
   endif()
 
-  message(STATUS "ROOT version   : ${USE_ROOT_PYTHIA8}")
-  message(STATUS "ROOT version   : ${USE_ROOT_PYTHIA6}")
   if(USE_ROOT_PYTHIA8)
-    message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     # search for standalone Pythia8
     find_package(Pythia8 QUIET)
-    message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     
     if(NOT TARGET Pythia8::Pythia8)
     
@@ -121,8 +117,6 @@ if(NOT TARGET GENIE3::All)
                                                        #stop everyone else worrying
     endif()
   endif()
-  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
-  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
 
   EnsureVarOrEnvSet(GENIE_REWEIGHT GENIE_REWEIGHT)
   # Needed for FNAL gpvms
@@ -153,17 +147,13 @@ if(NOT TARGET GENIE3::All)
     VERSION_VAR GENIE_VERSION
     )
 
-  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
   if(GENIE3_FOUND)
 
-  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     find_package(GENIEDependencies)
-  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     if(NOT GENIEDependencies_FOUND)
       SET(GENIE3_FOUND FALSE)
       return()
     endif()
-  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
 
     include(ParseConfigApps)
 
@@ -190,7 +180,6 @@ if(NOT TARGET GENIE3::All)
       endforeach()
     endif()
 
-  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     string(REGEX REPLACE "([0-9]*)\\.([0-9]*).*" "\\1\\2" GENIE_SINGLE_VERSION ${GENIE_VERSION})
     string(LENGTH "${GENIE_SINGLE_VERSION}" GENIE_SINGLE_VERSION_STRLEN)
     if(GENIE_SINGLE_VERSION_STRLEN LESS 3)
@@ -225,7 +214,6 @@ if(NOT TARGET GENIE3::All)
     endif()
 
     #duplicate because CMake gets its grubby mitts on repeated -Wl,--start-group options
-    message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     SET(GENIE_LIBS "-Wl,--no-as-needed;${GENIE_LIBS};${GENIE_LIBS};-Wl,--as-needed")
     if(USE_ROOT_PYTHIA8)
       SET(GENIE_DEP_LIBS ROOT::EGPythia8 ROOT::RIO ROOT::Core ROOT::Geom ROOT::MathMore Pythia8::Pythia8 LHAPDF::LHAPDF log4cpp::log4cpp LibXml2::LibXml2 GSL::gsl)
