@@ -14,37 +14,115 @@ if(NOT TARGET GENIE3::All)
 
   find_package(ROOT 6 REQUIRED COMPONENTS MathMore Geom)
 
-  #search for standalone EGPythia6
-  find_package(ROOTEGPythia6 QUIET)
-
-  if(NOT TARGET ROOT::EGPythia6)
-
-    find_library(EGPythia6_LIB
-      NAMES libEGPythia6.so
-      PATHS $ENV{ROOTSYS}/lib $ENV{ROOTSYS}/lib/root
-            $ENV{ROOTSYS}/lib64 $ENV{ROOTSYS}/lib64/root)
-
-    find_path(TPythia6_INC
-      NAMES TPythia6.h
-      PATHS $ENV{ROOTSYS}/include $ENV{ROOTSYS}/include/root)
-
-    if("${EGPythia6_LIB}" STREQUAL "EGPythia6_LIB-NOT_FOUND")
-      cmessage(FATAL_ERROR "Cannot find libEGPythia6.so, required for GENIE.")
-    endif()
-
-    if("${TPythia6_INC}" STREQUAL "TPythia6_INC-NOT_FOUND")
-      cmessage(FATAL_ERROR "Cannot find TPythia6.h, required for GENIE.")
-    endif()
-
-    add_library(ROOT::EGPythia6 SHARED IMPORTED)
-    set_target_properties(ROOT::EGPythia6 PROPERTIES
-      PUBLIC_INCLUDE_DIRECTORIES "${TPythia6_INC}"
-      IMPORTED_LOCATION ${EGPythia6_LIB}
-    )
-
-    add_library(Pythia6::Pythia6 INTERFACE IMPORTED) #this dummy library should
-                                                     #stop everyone else worrying
+  find_program(ROOT_CONFIG_EXECUTABLE root-config HINTS ${ROOT_BINDIR} ENV PATH)
+  if(NOT ROOT_CONFIG_EXECUTABLE)
+    message(FATAL_ERROR "Could not find root-config")
   endif()
+  
+  execute_process(
+    COMMAND ${ROOT_CONFIG_EXECUTABLE} --version
+    OUTPUT_VARIABLE ROOT_CONFIG_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  
+  execute_process(
+    COMMAND ${ROOT_CONFIG_EXECUTABLE} --features
+    OUTPUT_VARIABLE ROOT_CONFIG_FEATURES
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  
+  message(STATUS "ROOT version   : ${ROOT_CONFIG_VERSION}")
+  message(STATUS "ROOT features  : ${ROOT_CONFIG_FEATURES}")
+
+  set(USE_ROOT_PYTHIA8 OFF)
+  set(USE_ROOT_PYTHIA6 OFF)
+  
+  string(REGEX MATCH "(^|[ \t])pythia8([ \t]|$)" _HAS_PYTHIA8 "${ROOT_CONFIG_FEATURES}")
+  string(REGEX MATCH "(^|[ \t])pythia6([ \t]|$)" _HAS_PYTHIA6 "${ROOT_CONFIG_FEATURES}")
+  
+  if(_HAS_PYTHIA8)
+    set(USE_ROOT_PYTHIA8 ON)
+  elseif(_HAS_PYTHIA6)
+    set(USE_ROOT_PYTHIA6 ON)
+  else()
+    message(FATAL_ERROR
+      "ROOT was not built with pythia8 or pythia6 support.\n"
+      "ROOT version  : ${ROOT_CONFIG_VERSION}\n"
+      "ROOT features : ${ROOT_CONFIG_FEATURES}"
+    )
+  endif()
+
+  message(STATUS "ROOT version   : ${USE_ROOT_PYTHIA8}")
+  message(STATUS "ROOT version   : ${USE_ROOT_PYTHIA6}")
+  if(USE_ROOT_PYTHIA8)
+    message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
+    # search for standalone Pythia8
+    find_package(Pythia8 QUIET)
+    message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
+    
+    if(NOT TARGET Pythia8::Pythia8)
+    
+      find_library(PYTHIA8_LIB
+        NAMES libpythia8.so libPythia8.so
+        PATHS $ENV{PYTHIA8}/lib $ENV{PYTHIA8}/lib64
+              $ENV{PYTHIA8_DIR}/lib $ENV{PYTHIA8_DIR}/lib64)
+    
+      find_path(PYTHIA8_INC
+        NAMES Pythia8/Pythia.h
+        PATHS $ENV{PYTHIA8}/include
+              $ENV{PYTHIA8_DIR}/include)
+    
+      if("${PYTHIA8_LIB}" STREQUAL "PYTHIA8_LIB-NOT_FOUND")
+        cmessage(FATAL_ERROR "Cannot find libpythia8.so, required for GENIE.")
+      endif()
+    
+      if("${PYTHIA8_INC}" STREQUAL "PYTHIA8_INC-NOT_FOUND")
+        cmessage(FATAL_ERROR "Cannot find Pythia8/Pythia.h, required for GENIE.")
+      endif()
+    
+      add_library(Pythia8::Pythia8 SHARED IMPORTED)
+      set_target_properties(Pythia8::Pythia8 PROPERTIES
+        PUBLIC_INCLUDE_DIRECTORIES "${PYTHIA8_INC}"
+        IMPORTED_LOCATION "${PYTHIA8_LIB}"
+      )
+    
+    endif()
+  elseif(USE_ROOT_PYTHIA6)
+
+    #search for standalone EGPythia6
+    find_package(ROOTEGPythia6 QUIET)
+
+    if(NOT TARGET ROOT::EGPythia6)
+
+      find_library(EGPythia6_LIB
+        NAMES libEGPythia6.so
+        PATHS $ENV{ROOTSYS}/lib $ENV{ROOTSYS}/lib/root
+              $ENV{ROOTSYS}/lib64 $ENV{ROOTSYS}/lib64/root)
+
+      find_path(TPythia6_INC
+        NAMES TPythia6.h
+        PATHS $ENV{ROOTSYS}/include $ENV{ROOTSYS}/include/root)
+
+      if("${EGPythia6_LIB}" STREQUAL "EGPythia6_LIB-NOT_FOUND")
+        cmessage(FATAL_ERROR "Cannot find libEGPythia6.so, required for GENIE.")
+      endif()
+
+      if("${TPythia6_INC}" STREQUAL "TPythia6_INC-NOT_FOUND")
+        cmessage(FATAL_ERROR "Cannot find TPythia6.h, required for GENIE.")
+      endif()
+
+      add_library(ROOT::EGPythia6 SHARED IMPORTED)
+      set_target_properties(ROOT::EGPythia6 PROPERTIES
+        PUBLIC_INCLUDE_DIRECTORIES "${TPythia6_INC}"
+        IMPORTED_LOCATION ${EGPythia6_LIB}
+      )
+
+      add_library(Pythia6::Pythia6 INTERFACE IMPORTED) #this dummy library should
+                                                       #stop everyone else worrying
+    endif()
+  endif()
+  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
+  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
 
   EnsureVarOrEnvSet(GENIE_REWEIGHT GENIE_REWEIGHT)
   # Needed for FNAL gpvms
@@ -75,13 +153,17 @@ if(NOT TARGET GENIE3::All)
     VERSION_VAR GENIE_VERSION
     )
 
+  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
   if(GENIE3_FOUND)
 
+  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     find_package(GENIEDependencies)
+  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     if(NOT GENIEDependencies_FOUND)
       SET(GENIE3_FOUND FALSE)
       return()
     endif()
+  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
 
     include(ParseConfigApps)
 
@@ -108,6 +190,7 @@ if(NOT TARGET GENIE3::All)
       endforeach()
     endif()
 
+  message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     string(REGEX REPLACE "([0-9]*)\\.([0-9]*).*" "\\1\\2" GENIE_SINGLE_VERSION ${GENIE_VERSION})
     string(LENGTH "${GENIE_SINGLE_VERSION}" GENIE_SINGLE_VERSION_STRLEN)
     if(GENIE_SINGLE_VERSION_STRLEN LESS 3)
@@ -142,8 +225,13 @@ if(NOT TARGET GENIE3::All)
     endif()
 
     #duplicate because CMake gets its grubby mitts on repeated -Wl,--start-group options
+    message(STATUS "Liang LiuROOT version   : ${ROOT_CONFIG_VERSION}")
     SET(GENIE_LIBS "-Wl,--no-as-needed;${GENIE_LIBS};${GENIE_LIBS};-Wl,--as-needed")
-    SET(GENIE_DEP_LIBS ROOT::EGPythia6 ROOT::RIO ROOT::Core ROOT::Geom ROOT::MathMore Pythia6::Pythia6 LHAPDF::LHAPDF log4cpp::log4cpp LibXml2::LibXml2 GSL::gsl)
+    if(USE_ROOT_PYTHIA8)
+      SET(GENIE_DEP_LIBS ROOT::EGPythia8 ROOT::RIO ROOT::Core ROOT::Geom ROOT::MathMore Pythia8::Pythia8 LHAPDF::LHAPDF log4cpp::log4cpp LibXml2::LibXml2 GSL::gsl)
+    elseif(USE_ROOT_PYTHIA6)
+      SET(GENIE_DEP_LIBS ROOT::EGPythia6 ROOT::RIO ROOT::Core ROOT::Geom ROOT::MathMore Pythia6::Pythia6 LHAPDF::LHAPDF log4cpp::log4cpp LibXml2::LibXml2 GSL::gsl)
+    endif()
 
     LIST(APPEND GENIE_ALL_INC_DIRS ${GENIE_INC_DIR})
     LIST(APPEND GENIE_ALL_LIB_DIRS ${GENIE_LIB_DIR})
