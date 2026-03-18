@@ -5,7 +5,8 @@ if(NOT DEFINED GENIEDependencies_FOUND OR NOT GENIEDependencies_FOUND)
 
   #Check and set up GENIE Dependencies
   find_package(Pythia6)
-  if(NOT Pythia6_FOUND)
+  find_package(Pythia8)
+  if(NOT Pythia6_FOUND AND NOT Pythia8_FOUND)
     SET(GENIEDependencies_FOUND FALSE)
     return()
   endif()
